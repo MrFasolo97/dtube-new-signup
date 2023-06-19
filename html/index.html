@@ -1,0 +1,40 @@
+<html>
+    <head>
+        <title>D.Tube Signup</title>
+        <script>
+            function checkUsername(username){
+                document.getElementById('uname_response').innerHTML ="";
+                if (username.length > 4) {
+                    fetch("/checkUsername/"+username, {method: "POST"}).then((response) => {
+                        if (response.status == 200) {
+                            response.text().then((res) => {
+                                document.getElementById('uname_response').innerHTML = res;
+                            })
+                        }
+                    }).catch((reason) =>{
+                        if (reason.status == 404) {
+                            document.getElementById('uname_response').innerHTML = "Error checking for username availability.";
+                        }
+                    })
+                }
+            }    
+        </script>
+        <style>
+            a:visited {color: #F01A30;}
+            a {color: #F01A30;}
+            article {text-align: center;}
+        </style>
+    </head>
+    <body style="background-color: #223154; color: #E6E6E6;">
+        <article>
+            <a href="https://d.tube">Homepage</a>
+            <h3>Singup form</h3>
+            <form name="signup" method="POST" action="/signup">
+                <input type="email" name="email" placeholder="Enter Email"><br />
+                <input type="text" name="username" placeholder="Enter Username" maxlength='60' onkeyup="checkUsername(this.value);"><br />
+                <input type='submit' name='submit'><br />
+                <div id="uname_response">
+            </form>
+        </article>
+    </body>
+</html>

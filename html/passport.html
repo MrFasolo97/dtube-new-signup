@@ -1,0 +1,142 @@
+
+<html>
+<head>
+  <title>Web3 Metamask Login</title>
+  <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script src="ethers.min.js"></script>
+  <script>
+  const SCORER_ID = 1222;
+  // endpoint for getting the signing message
+  const SIGNING_MESSAGE_URI = 'https://api.scorer.gitcoin.co/registry/signing-message'
+  // score needed to see hidden message
+
+  async function bytesToHex(bytes) {
+    return Array.from(
+      bytes,
+      byte => byte.toString(16).padStart(2, "0")
+    ).join("");
+  }
+  async function stringToUTF8Bytes(string) {
+    return new TextEncoder().encode(string);
+  }
+
+  async function setScore(number) {
+    window.passportScore = number;
+  }
+  async function getScore(number) {
+    return window.passportScore;
+  }
+  async function checkPassport() {
+      const currentAddress = window.userWalletAddress;
+      await axios.post("/getPassport/"+currentAddress).then((result) => {
+      const passportData = result.data;
+      console.log('passportData: ', passportData);
+      if (passportData.score) {
+        const roundedScore = Math.round(passportData.score * 100) / 100
+        setScore(roundedScore.toString());
+        if (passportData.nextUrl !== null) {
+          signupAnchor.href = passportData.nextUrl+"/index.html";
+          signupAnchor.removeAttribute("hidden");
+        }
+      } else {
+        console.log('No score available, please add stamps to your passport and then resubmit.')
+        setNoScoreMessage('No score available, please submit your passport after you have added some stamps.')
+      }
+    }).catch((reason)=> {
+      console.log('error: ', reason)
+    });
+  }
+  async function submitPassport() {
+    if (!window.ethereum) return
+    try {
+      let msg, nonce;
+      await axios.post("/getSigningMessage", {timeout: 20000}).then(async (response) => {
+        let msgTmp;
+        console.log(response.data)
+        msg = response.data[0];
+        nonce = response.data[1];
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner()
+        const signature = await signer.signMessage(msg);
+        axios.get("/submitPassport/"+window.userWalletAddress+"/"+signature+"/"+nonce);
+      }).catch((resason) => {
+        console.log(resason);
+      });
+    } catch (err) {
+      console.log('error: ', err)
+    }
+  }
+  </script>
+</head>
+
+<body class="flex w-screen h-screen justify-center items-center">
+  <div class="flex-col space-y-2 justify-center items-center">
+    <a href="https://metamask.io/">Get your metamask wallet!</a><br /><br />
+    <a href="https://passport.gitcoin.co/">Get your web3 passport!</a><br /><br />
+    <button id='loginButton' onclick="" class="mx-auto rounded-md p-2 bg-purple-500 text-white">
+      Login with MetaMask
+    </button>
+    <button hidden=true id='checkButton' onclick="" class="mx-auto rounded-md p-2 bg-purple-500 text-white">
+      Check eligibility
+    </button>
+    <a href="" hidden=true id="signupAnchor">Proceed to signup!</a>
+    <p id='userWallet' class='text-lg text-gray-600 my-2'></p>
+  </div>
+
+  <script>
+    window.userWalletAddress = null
+    const loginButton = document.getElementById('loginButton')
+    const checkButton = document.getElementById('checkButton')
+    const userWallet = document.getElementById('userWallet')
+    const signupAnchor = document.getElementById('signupAnchor')
+
+    function toggleButton() {
+      if (!window.ethereum) {
+        loginButton.innerText = 'MetaMask is not installed'
+        loginButton.classList.remove('bg-purple-500', 'text-white')
+        loginButton.classList.add('bg-gray-500', 'text-gray-100', 'cursor-not-allowed')
+        return false
+      }
+
+      loginButton.addEventListener('click', loginWithMetaMask)
+    }
+    
+    async function loginWithMetaMask() {
+      try {
+        await window.ethereum.request({ method: 'eth_requestAccounts' }).then((accounts => {
+        if (!accounts) { return }
+          window.userWalletAddress = accounts[0];
+          userWallet.innerText = window.userWalletAddress;
+          loginButton.innerText = 'Sign out of MetaMask';
+          loginButton.removeEventListener('click', loginWithMetaMask)
+          setTimeout(() => {
+            submitPassport();
+            checkButton.removeAttribute("hidden");
+            checkButton.addEventListener('click', checkPassport)
+            loginButton.addEventListener('click', signOutOfMetaMask)
+
+          }, 200)}));
+        } catch(e) {
+          console.error(e.message)
+          return
+        }
+      }
+
+    function signOutOfMetaMask() {
+      window.userWalletAddress = null
+      userWallet.innerText = ''
+      loginButton.innerText = 'Sign in with MetaMask'
+      loginButton.removeEventListener('click', signOutOfMetaMask)
+      setTimeout(() => {
+        loginButton.addEventListener('click', loginWithMetaMask)
+      }, 200)
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      toggleButton()
+    });
+  </script>
+</body>
+
+</html>
