@@ -185,11 +185,11 @@ app.post('/getPassport/:address', (req, res) => {
   axios.get(GET_PASSPORT_SCORE_URI+SCORER_ID+"/"+address, {headers: {"X-API-KEY": config.GC_API_KEY}, timeout: 20000}).then((result) => {
     //console.log(result.data);
     let returnValue = result.data;
-    if(result.data.score >= 15) {
+    if (result.data.score >= 15) {
       mongoose.connect('mongodb://127.0.0.1:27017/signup?readPreference=primary&appname=dtube-signup&directConnection=true&ssl=false', { useNewUrlParser: true, useUnifiedTopology: true}).then(async(db) => {
         await requestSchema.findOne({"address": address}).then((request) => {
           let nextUrl = '';
-          if(request === null) {
+          if (request === null) {
             const _id = randomUUID();
             requestSchema.create({"_id": _id, "address": address, "score": result.data.score});
             nextUrl = "/signupPage/"+address+"/"+_id;
@@ -199,7 +199,7 @@ app.post('/getPassport/:address', (req, res) => {
           returnValue.nextUrl = nextUrl;
           res.send(returnValue);
         }).catch((reason) => {
-          if(reason) throw reason;
+          if (reason) throw reason;
         })
       });
     } else {

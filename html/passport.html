@@ -1,15 +1,19 @@
 
 <html>
 <head>
-  <title>Web3 Metamask Login</title>
+  <title>D.Tube Signup</title>
   <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    a, a.visited {
+      color:aqua
+    }
+  </style>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
   <script src="ethers.min.js"></script>
   <script>
   const SCORER_ID = 1222;
   // endpoint for getting the signing message
   const SIGNING_MESSAGE_URI = 'https://api.scorer.gitcoin.co/registry/signing-message'
-  // score needed to see hidden message
 
   async function bytesToHex(bytes) {
     return Array.from(
@@ -35,9 +39,13 @@
       if (passportData.score) {
         const roundedScore = Math.round(passportData.score * 100) / 100
         setScore(roundedScore.toString());
-        if (passportData.nextUrl !== null) {
+        if (typeof passportData.nextUrl !== 'undefined') {
           signupAnchor.href = passportData.nextUrl+"/index.html";
           signupAnchor.removeAttribute("hidden");
+          notEnoughScore.setAttribute("hidden", true)
+        } else {
+          signupAnchor.setAttribute("hidden", true)
+          notEnoughScore.removeAttribute("hidden")
         }
       } else {
         console.log('No score available, please add stamps to your passport and then resubmit.')
@@ -72,15 +80,16 @@
 
 <body class="flex w-screen h-screen justify-center items-center">
   <div class="flex-col space-y-2 justify-center items-center">
-    <a href="https://metamask.io/">Get your metamask wallet!</a><br /><br />
-    <a href="https://passport.gitcoin.co/">Get your web3 passport!</a><br /><br />
+    <a target="_blank" href="https://passport.gitcoin.co/">Get your web3 passport!</a><br /><br />
+    <a id='metamaskLink' target="_blank" hidden=true href="https://metamask.io/">Get your metamask wallet!</a><br /><br />
     <button id='loginButton' onclick="" class="mx-auto rounded-md p-2 bg-purple-500 text-white">
       Login with MetaMask
     </button>
     <button hidden=true id='checkButton' onclick="" class="mx-auto rounded-md p-2 bg-purple-500 text-white">
       Check eligibility
-    </button>
+    </button><br />
     <a href="" hidden=true id="signupAnchor">Proceed to signup!</a>
+    <p id='notEnoughScore' hidden="true">We're sorry, but you need a passport score of at least 15 to signup. Verify something more and retry.</a>
     <p id='userWallet' class='text-lg text-gray-600 my-2'></p>
   </div>
 
@@ -90,9 +99,12 @@
     const checkButton = document.getElementById('checkButton')
     const userWallet = document.getElementById('userWallet')
     const signupAnchor = document.getElementById('signupAnchor')
+    const notEnoughScore = document.getElementById('notEnoughScore')
+    const metamaskLink = document.getElementById('metamaskLink')
 
     function toggleButton() {
       if (!window.ethereum) {
+        metamaskLink.removeAttribute('hidden')
         loginButton.innerText = 'MetaMask is not installed'
         loginButton.classList.remove('bg-purple-500', 'text-white')
         loginButton.classList.add('bg-gray-500', 'text-gray-100', 'cursor-not-allowed')
@@ -110,8 +122,8 @@
           userWallet.innerText = window.userWalletAddress;
           loginButton.innerText = 'Sign out of MetaMask';
           loginButton.removeEventListener('click', loginWithMetaMask)
-          setTimeout(() => {
-            submitPassport();
+          setTimeout(async () => {
+            await submitPassport();
             checkButton.removeAttribute("hidden");
             checkButton.addEventListener('click', checkPassport)
             loginButton.addEventListener('click', signOutOfMetaMask)
