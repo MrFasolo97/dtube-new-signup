@@ -1,10 +1,11 @@
-import express from 'express';;
+import express, { urlencoded } from 'express';;
 import log4js from 'log4js';
 import * as javalon from 'javalon';
 import * as fs from 'fs';
 import axios from 'axios';
 import mongoose from 'mongoose';
 import { randomUUID } from 'crypto';
+import bodyParser from 'body-parser';
 import validateUsername from './username_validation.mjs';
 import requestSchema from './mongo/request.mjs';
 
@@ -30,7 +31,6 @@ const logger = log4js.getLogger();
 const app = express();
 const indexPage = fs.readFileSync("html/index.html")
 const passportPage = fs.readFileSync("html/passport.html")
-const minLength = 9;
 const GET_PASSPORT_SCORE_URI = `https://api.scorer.gitcoin.co/registry/score/`
 // endpoint for submitting passport
 const SUBMIT_PASSPORT_URI = 'https://api.scorer.gitcoin.co/registry/submit-passport'
@@ -39,7 +39,7 @@ const SIGNING_MESSAGE_URI = 'https://api.scorer.gitcoin.co/registry/signing-mess
 
 
 function createAccAndFeed(username, pubKey, give_bw, give_vt, give_dtc) {
-  console.log('Creating '+username+' '+pubKey)
+  logger.info('Creating '+username+' '+pubKey)
   var txData = {
       pub: pubKey,
       name: username
@@ -51,7 +51,7 @@ function createAccAndFeed(username, pubKey, give_bw, give_vt, give_dtc) {
   newTx = javalon.sign(config.avalon.priv, config.avalon.account, newTx)
   javalon.sendTransaction(newTx, function(err, res) {
       if (err) return
-      console.log('Feeding '+username)
+      logger.info('Feeding '+username)
       setTimeout(function() {
           if (give_vt) {
               var newTx = {
@@ -97,18 +97,17 @@ app.get('/signup', (req, res) => {
   res.send("")  
 });
 
+
+app.use(bodyParser.urlencoded({ extended: true }))
 app.post('/signup', (req, res) => {
-  console.log(req)
-  console.log(req.query)
-  let username = req.params.username
-  let email = req.params.email
-  console.log(username)
-  console.log(email)
+  let username = req.body.username
+  let email = req.body.email
+  logger.info(username)
+  logger.info(email)
   res.send("")
 });
 
 const API_ADDRESS = "https://avalon.d.tube/"
-
 app.post('/checkUsername/:username', (req, res) => {
   const { username } = req.params;
   if(typeof validateUsername(username, 50,
@@ -138,7 +137,7 @@ app.post('/getSigningMessage', (req, res) => {
   axios.get(SIGNING_MESSAGE_URI, {headers: {"X-API-KEY": config.GC_API_KEY}, timeout: 20000}).then((result) => {
     res.send([result.data.message, result.data.nonce]);
   }).catch((reason) => {
-    console.log('error: ', reason)
+    logger.error('error: ', reason)
   });
 });
 
@@ -154,19 +153,19 @@ app.get('/submitPassport/:address/:signature/:nonce', (req, res) => {
         ).then((response) => {
           res.send(response.data);
         }).catch((reason) => {
-          console.log(reason);
+          logger.warn(reason);
         });
 })
 
 app.get('/ethers.min.js', (req, res) => {
-  res.contentType('/ethers.min.js');
+  res.type('html/ethers.min.js');
   res.send(fs.readFileSync("html/ethers.min.js"));
 })
 
-
-app.get('/signupPage/:address/:token/index.html', (req, res) => {
-  let { address, token } = req.params;
-  mongoose.connect('mongodb://127.0.0.1:27017/signup?readPreference=primary&appname=dtube-signup&directConnection=true&ssl=false', { useNewUrlParser: true, useUnifiedTopology: true}).then(async(db) => {
+app.use(bodyParser.urlencoded({ extended: true }))
+app.post('/signupPage', (req, res) => {
+  let { address, token } = req.body;
+  mongoose.connect(config.MONGODB_ADDRESS_DB+'?readPreference=primary&appname=dtube-signup&directConnection=true&ssl=false', { useNewUrlParser: true, useUnifiedTopology: true}).then(async(db) => {
         await requestSchema.findOne({"address": address, _id: token}).then((request) => {
           if(request === null) {
             res.status(400).send("Invalid request!");
@@ -183,20 +182,22 @@ app.get('/signupPage/:address/:token/index.html', (req, res) => {
 app.post('/getPassport/:address', (req, res) => {
   let { address } = req.params;
   axios.get(GET_PASSPORT_SCORE_URI+SCORER_ID+"/"+address, {headers: {"X-API-KEY": config.GC_API_KEY}, timeout: 20000}).then((result) => {
-    //console.log(result.data);
     let returnValue = result.data;
     if (result.data.score >= 15) {
-      mongoose.connect('mongodb://127.0.0.1:27017/signup?readPreference=primary&appname=dtube-signup&directConnection=true&ssl=false', { useNewUrlParser: true, useUnifiedTopology: true}).then(async(db) => {
+      mongoose.connect(config.MONGODB_ADDRESS_DB+'?readPreference=primary&appname=dtube-signup&directConnection=true&ssl=false', { useNewUrlParser: true, useUnifiedTopology: true}).then(async(db) => {
         await requestSchema.findOne({"address": address}).then((request) => {
-          let nextUrl = '';
+          let address, token;
           if (request === null) {
             const _id = randomUUID();
             requestSchema.create({"_id": _id, "address": address, "score": result.data.score});
-            nextUrl = "/signupPage/"+address+"/"+_id;
+            address = address;
+            token = _id;
           } else {
-            nextUrl = "/signupPage/"+request.address+"/"+request._id;
+            address = request.address;
+            token = request._id;
           }
-          returnValue.nextUrl = nextUrl;
+          returnValue.address = address;
+          returnValue.token = token;         
           res.send(returnValue);
         }).catch((reason) => {
           if (reason) throw reason;
@@ -206,7 +207,7 @@ app.post('/getPassport/:address', (req, res) => {
       res.send(returnValue);
     }
   }).catch((reason) => {
-    console.log('error: ', reason)
+    logger.warn(reason)
     res.status(400).send("Error!");
   });
 });
