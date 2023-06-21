@@ -1,0 +1,4 @@
+{
+    "GC_API_KEY": "",
+    "MONGODB_ADDRESS_DB": "mongodb://127.0.0.1:27017/signup"
+}
