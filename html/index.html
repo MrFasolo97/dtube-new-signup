@@ -1,23 +1,36 @@
 <html>
     <head>
         <title>D.Tube Signup</title>
+        <script src="https://unpkg.com/javalon/bin/javalon.min.js"></script>
+        <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+        <script src="/js/ethers.min.js"></script>
+        <script src="/js/index.js"></script>
         <script>
+            function saveKeys() {
+                let pub = document.getElementById("pubKey").getAttribute("value");
+                let priv = document.getElementById("privKey").getAttribute("value");
+                let key = "Public key: " + pub + "\r\n" + "Private key: " + priv;
+                let blob = new Blob([key], {type: "text/plain;charset=utf-8"})
+                saveFile(blob, "dtube_key.txt")
+            }
+            setTimeout(generateKeys, 1000);
             function checkUsername(username){
-                document.getElementById('uname_response').innerHTML ="";
+                document.getElementById('uname_response').innerHTML = "";
                 if (username.length > 4) {
-                    fetch("/checkUsername/"+username, {method: "POST"}).then((response) => {
-                        if (response.status == 200) {
-                            response.text().then((res) => {
-                                document.getElementById('uname_response').innerHTML = res;
-                            })
+                    axios.post("/checkUsername/"+username).then((response) => {
+                        if(typeof response.status !== 'undefined' && (response.status == 202 || response.status == 200)) {
+                            document.getElementById('uname_response').innerHTML = response.data;
                         }
-                    }).catch((reason) =>{
-                        if (reason.status == 404) {
-                            document.getElementById('uname_response').innerHTML = "Error checking for username availability.";
-                        }
+                    }).catch((reason) => {
+                        document.getElementById('uname_response').innerHTML = "Error checking for username availability.";
                     })
                 }
-            }    
+            }
+            function signupRequest() {
+                alert("Do not share your private key with anyone, even DTube staff")
+                alert("Do not lose your private key or it cannot be recovered")
+                document.getElementById('emailMessage').removeAttribute("hidden");
+            }
         </script>
         <style>
             a:visited {color: #F01A30;}
@@ -33,11 +46,23 @@
         <article>
             <a href="https://d.tube">Homepage</a>
             <h3>Singup form</h3>
-            <form name="signup" method="POST" action="/signup">
-                <input type="email" name="email" placeholder="Enter Email"><br />
-                <input type="text" name="username" placeholder="Enter Username" maxlength='60' onkeyup="checkUsername(this.value);"><br />
-                <input type='submit' name='submit'><br />
-                <div id="uname_response">
+            <form action="saveUserData/{{USER_ETH_ADDRESS}}" method="POST">
+                <input type="email" id="email" name="email" placeholder="Enter Email"><br />
+                <input type="text" name="username" id="username" placeholder="Enter Username" maxlength='60' onkeyup="checkUsername(this.value);"><br /><br />
+                <p id="uname_response"></p>
+                Private key: <input type="text" id="privKey" name="privKey" readonly size="50"><br />
+                Public key: <input type="text" id="pubKey" name="pubKey" readonly size="50"><br /><br />
+                <button id="saveKeys" class="btn" onclick="saveKeys()" />
+                    <i class="icon icon-download"></i> Save keys to disk
+                </button><br /><br />
+                <input type="checkbox" id="checkbox1" name="checkbox1" oninput="canSendKeys()"/>
+                <i class="form-icon"></i> <i>I understand that my private key will be unrecoverable if I lose it</i><br />
+                <input type="checkbox" id="checkbox2" name="checkbox2" oninput="canSendKeys()"/>
+                <i class="form-icon"></i> <i>I have backed up my private key safely</i><br /><br />
+                <button id="confirmKeys" class="btn btn-primary btn-lg" onclick="signupRequest()" disabled />
+                    <i class="icon icon-check"></i> Confirm
+                </button>
+                <p id="emailMessage" hidden="true"> To complete the signup process check your email (and spam folder if needed), to find a link from us.</p>
             </form>
         </article>
     </body>

@@ -13,8 +13,24 @@ const requestSchema = new mongoose.Schema({
         required: false,
         type: String
     },
-    score: {
+    emailCode: {
         required: false,
+        type: String
+    },
+    pubKey: {
+        required: false,
+        type: String
+    },
+    username: {
+        required: false,
+        type: String
+    },
+    accountMade: {
+        required: true,
+        type: Boolean
+    },
+    score: {
+        required: true,
         type: Number
     }
 })

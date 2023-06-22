@@ -12,7 +12,7 @@
     }
   </style>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-  <script src="ethers.min.js"></script>
+  <script src="/js/ethers.min.js"></script>
   <script>
   const SCORER_ID = 1222;
   // endpoint for getting the signing message
@@ -88,12 +88,12 @@
     <a id='metamaskLink' target="_blank" hidden=true href="https://metamask.io/">Get your metamask wallet!</a><br /><br />
     <button id='loginButton' onclick="" class="mx-auto rounded-md p-2 bg-purple-500 text-white">
       Login with MetaMask
-    </button>
+    </button><br />
     <button hidden=true id='checkButton' onclick="" class="mx-auto rounded-md p-2 bg-purple-500 text-white">
       Check eligibility
     </button><br />
     <form id="signupForm" method="POST" hidden="true" action="signupPage">
-      <input type="submit" id="signupButton" class="mx-auto rounded-md p-2 bg-purple-500 text-white" value="Proceed to signup">
+      <input type="submit" id="signupButton" class="mx-auto rounded-md p-2 bg-purple-500 text-white" value="Proceed to signup"><br />
       <input type="text" name="token" hidden="true" id="token" value="">
       <input type="text" name="address" hidden="true" id="address" value="">
     </form>
