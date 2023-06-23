@@ -9,6 +9,10 @@ const requestSchema = new mongoose.Schema({
         required: true,
         type: String
     },
+    cryptoAddressVerified: {
+        required: false,
+        type: Boolean
+    },
     email: {
         required: false,
         type: String

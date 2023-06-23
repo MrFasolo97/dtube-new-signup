@@ -1,4 +1,4 @@
-import express, { urlencoded } from 'express';;
+import express from 'express';;
 import log4js from 'log4js';
 import * as javalon from 'javalon';
 import * as fs from 'fs';
@@ -6,6 +6,7 @@ import axios from 'axios';
 import mongoose from 'mongoose';
 import { randomUUID } from 'crypto';
 import bodyParser from 'body-parser';
+import { ethers } from 'ethers';
 import validateUsername from './username_validation.mjs';
 import requestSchema from './mongo/request.mjs';
 import emails from './emails.js';
@@ -34,6 +35,7 @@ logger.level = config.logLevel || "DEBUG";
 app.set('trust proxy', true);
 const indexPage = fs.readFileSync("html/index.html", { encoding: "utf-8" })
 const passportPage = fs.readFileSync("html/passport.html")
+const confirmAccountPage = fs.readFileSync("html/confirmAccount.html", { encoding: "utf-8" })
 const GET_PASSPORT_SCORE_URI = `https://api.scorer.gitcoin.co/registry/score/`
 // endpoint for submitting passport
 const SUBMIT_PASSPORT_URI = 'https://api.scorer.gitcoin.co/registry/submit-passport'
@@ -101,7 +103,7 @@ app.get('/completeSignup/:uuid', (req, res) => {
   mongoose.connect(config.MONGODB_ADDRESS_DB+'?readPreference=primary&appname=dtube-signup&directConnection=true&ssl=false', { useNewUrlParser: true, useUnifiedTopology: true}).then((db) => {
     requestSchema.findOne({emailCode: req.params.uuid, score: {$gte: 15}}).then((result) => {
       if(result !== null && result.accountMade !== true) {
-        res.send("Please, confirm your data:<br /><br />Username: "+result.username+"<br /><br />Public Key: "+result.pubKey+"<br /><br/>If your public key from previous steps matches this one, and you backed-up your private key, and the username is the one you did chose, please go ahead and click the link below. If something is wrong, please stop here and ask for help on our <a href='https://discord.gg/dtube'>Discord</a>!<br /><br /><a href='/congratulations/"+req.params.uuid+"'>Confirm account!</a>");
+        res.send(confirmAccountPage.replace("{{USERNAME}}", result.username).replace("{{PUBLIC_KEY}}", result.pubKey).replace("{{UUID}}", result.emailCode));
       } else {
         logger.debug(result);
         res.send("Something went wrong! Please, retry");
@@ -130,7 +132,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.post('/saveUserData/:address', (req, res) => {
   let email = emails.removeEmailTricks(req.body.email) || req.body.email;
   if (email === null || typeof email === 'undefined') {
-    res.status(500).send("");
+    res.status(500).send("Email required!");
     throw new Error("Email not defined!");
   }
   const { username, pubKey } = req.body;
@@ -213,21 +215,6 @@ app.post('/getSigningMessage', (req, res) => {
   });
 });
 
-app.get('/submitPassport/:address/:signature/:nonce', (req, res) => {
-  axios.post(SUBMIT_PASSPORT_URI,
-        {
-          address: req.params.address,
-          scorer_id: SCORER_ID,
-          signature: req.params.signature,
-          nonce: req.params.nonce
-        },
-        { headers: {"X-API-KEY": config.GC_API_KEY}}
-        ).then((response) => {
-          res.send(response.data);
-        }).catch((reason) => {
-          logger.warn(reason);
-        });
-})
 
 app.get('/js/:file', (req, res) => {
   let { file } = req.params;
@@ -248,9 +235,13 @@ app.post('/getPassport/:address', (req, res) => {
             const emailCode = randomUUID();
             requestSchema.create({_id: _id, address: address, score: result.data.score, email: "", emailCode: emailCode, pubKey: "", username: "", accountMade: false});
             token = _id;
+            returnValue.accountMade = false;
           } else if (request.accountMade === false || typeof request.accountMade === 'undefined') {
             address = request.address;
             token = request._id;
+            returnValue.accountMade = false;
+          } else {
+            returnValue.accountMade = request.accountMade;
           }
           returnValue.address = address;
           returnValue.token = token;         
@@ -267,6 +258,38 @@ app.post('/getPassport/:address', (req, res) => {
     res.status(400).send("Error!");
   });
 });
+
+app.use(express.json())
+app.post('/submitPassport/:address/:signature/:nonce', (req, res) => {
+  const { message } = req.body;
+  axios.post(SUBMIT_PASSPORT_URI,
+        {
+          address: req.params.address,
+          scorer_id: SCORER_ID,
+          signature: req.params.signature,
+          nonce: req.params.nonce
+        },
+        { headers: {"X-API-KEY": config.GC_API_KEY}}
+        ).then((response) => {
+          if (response.data.score >= 15) {
+            mongoose.connect(config.MONGODB_ADDRESS_DB+'?readPreference=primary&appname=dtube-signup&directConnection=true&ssl=false', { useNewUrlParser: true, useUnifiedTopology: true}).then(async(db) => {
+              await requestSchema.findOne({address: req.params.address}).then((request) => {
+                let addressFromSignature = ethers.verifyMessage(message, req.params.signature);
+                logger.debug(addressFromSignature);
+                if(addressFromSignature.length >= 40 && addressFromSignature === req.params.address) {
+                  request.nonce = req.params.nonce;
+                  request.signature = req.params.signature;
+                  request.cryptoAddressVerified = true;
+                  request.save();
+                }
+              });
+            });
+          }
+          res.send(response.data);
+        }).catch((reason) => {
+          logger.warn(reason);
+        });
+})
 
 app.use(bodyParser.urlencoded({ extended: true }))
 app.post('/signupPage', (req, res) => {

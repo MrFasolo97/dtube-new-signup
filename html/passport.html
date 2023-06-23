@@ -46,7 +46,11 @@
           inputAddress.setAttribute("value", passportData.address)
           inputToken.setAttribute("value", passportData.token)
           signupForm.removeAttribute("hidden");
+          accountAlreadyMade.setAttribute("hidden", true);
           notEnoughScore.setAttribute("hidden", true)
+        } else if (passportData.accountMade) {
+          signupForm.setAttribute("hidden", true)
+          accountAlreadyMade.removeAttribute("hidden")          
         } else {
           signupForm.setAttribute("hidden", true)
           notEnoughScore.removeAttribute("hidden")
@@ -68,11 +72,15 @@
         console.log(response.data)
         msg = response.data[0];
         nonce = response.data[1];
+        loginButton.addEventListener('click', signOutOfMetaMask)
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         const signer = provider.getSigner()
         const signature = await signer.signMessage(msg);
-        axios.get("/submitPassport/"+window.userWalletAddress+"/"+signature+"/"+nonce);
+        checkButton.removeAttribute("hidden");
+        checkButton.addEventListener('click', checkPassport)
+        axios.post("/submitPassport/"+window.userWalletAddress+"/"+signature+"/"+nonce, { message: msg });
       }).catch((resason) => {
+        metamaskSignatureRequired.removeAttribute("hidden");
         console.log(resason);
       });
     } catch (err) {
@@ -84,6 +92,7 @@
 
 <body class="flex w-screen h-screen justify-center items-center">
   <div class="flex-col space-y-2 justify-center items-center">
+    <a href="https://d.tube">Homepage</a><br />
     <a target="_blank" href="https://passport.gitcoin.co/">Get your web3 passport!</a><br /><br />
     <a id='metamaskLink' target="_blank" hidden=true href="https://metamask.io/">Get your metamask wallet!</a><br /><br />
     <button id='loginButton' onclick="" class="mx-auto rounded-md p-2 bg-purple-500 text-white">
@@ -97,12 +106,15 @@
       <input type="text" name="token" hidden="true" id="token" value="">
       <input type="text" name="address" hidden="true" id="address" value="">
     </form>
+    <p id='metamaskSignatureRequired' hidden="true">A metamask signature is required to proceed, a simple signature request will not cost anything (double check on metamask though).</a>
     <p id='notEnoughScore' hidden="true">We're sorry, but you need a passport score of at least 15 to signup. Verify something more and retry.</a>
+    <p id='accountAlreadyMade' hidden="true">This passport address was already used to make an account.</a>
     <p id='userWallet' class='text-lg text-gray-600 my-2'></p>
   </div>
 
   <script>
     window.userWalletAddress = null
+    const metamaskSignatureRequired = document.getElementById("metamaskSignatureRequired");
     const inputAddress = document.getElementById('address')
     const inputToken = document.getElementById('token')
     const loginButton = document.getElementById('loginButton')
@@ -110,6 +122,7 @@
     const userWallet = document.getElementById('userWallet')
     const signupForm = document.getElementById('signupForm')
     const notEnoughScore = document.getElementById('notEnoughScore')
+    const accountAlreadyMade = document.getElementById('accountAlreadyMade')
     const metamaskLink = document.getElementById('metamaskLink')
 
     function toggleButton() {
@@ -134,10 +147,6 @@
           loginButton.removeEventListener('click', loginWithMetaMask)
           setTimeout(async () => {
             await submitPassport();
-            checkButton.removeAttribute("hidden");
-            checkButton.addEventListener('click', checkPassport)
-            loginButton.addEventListener('click', signOutOfMetaMask)
-
           }, 200)}));
         } catch(e) {
           console.error(e.message)
@@ -146,6 +155,7 @@
       }
 
     function signOutOfMetaMask() {
+      metamaskSignatureRequired.setAttribute("hidden", true);
       window.userWalletAddress = null
       userWallet.innerText = ''
       loginButton.innerText = 'Sign in with MetaMask'
