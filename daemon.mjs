@@ -10,9 +10,9 @@ import { ethers } from 'ethers';
 import validateUsername from './username_validation.mjs';
 import requestSchema from './mongo/request.mjs';
 import emails from './emails.js';
+import config from './config.js';
 
 mongoose.set('strictQuery', false);
-let config = JSON.parse(fs.readFileSync("config.json"));
 
 
 log4js.configure({
