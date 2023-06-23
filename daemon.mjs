@@ -228,7 +228,7 @@ app.post('/getPassport/:address', (req, res) => {
   let { address } = req.params;
   axios.get(GET_PASSPORT_SCORE_URI+SCORER_ID+"/"+address, {headers: {"X-API-KEY": config.GC_API_KEY}, timeout: 20000}).then((result) => {
     let returnValue = result.data;
-    if (result.data.score >= config.GC_PASSPORT_THRESHOLD) {
+    if (+result.data.score >= config.GC_PASSPORT_THRESHOLD) {
       mongoose.connect(config.MONGODB_ADDRESS_DB+'?readPreference=primary&appname=dtube-signup&directConnection=true&ssl=false', { useNewUrlParser: true, useUnifiedTopology: true}).then(async(db) => {
         await requestSchema.findOne({address: address}).then((request) => {
           let token;
