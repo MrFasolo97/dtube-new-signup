@@ -41,7 +41,7 @@ const GET_PASSPORT_SCORE_URI = `https://api.scorer.gitcoin.co/registry/score/`
 const SUBMIT_PASSPORT_URI = 'https://api.scorer.gitcoin.co/registry/submit-passport'
 // endpoint for getting the signing message
 const SIGNING_MESSAGE_URI = 'https://api.scorer.gitcoin.co/registry/signing-message'
-
+avalon.init({api: config.avalon.api});
 
 function createAccAndFeed(username, pubKey, give_bw, give_vt, give_dtc) {
   logger.info('Creating '+username+' '+pubKey)
