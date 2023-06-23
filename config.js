@@ -50,6 +50,7 @@ var config = {
         smsCodeAttempts: 3
     },
     GC_API_KEY: process.env.GC_API_KEY || "aaa",
+    GC_PASSPORT_THRESHOLD: process.env.GC_PASSPORT_THRESHOLD || 15,
     MONGODB_ADDRESS_DB: process.env.MONGODB_ADDRESS_DB || "mongodb://127.0.0.1:27017/signup",
     logLevel: process.env.LOG_LEVEL || "debug"
 }

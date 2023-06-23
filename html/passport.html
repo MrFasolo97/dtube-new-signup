@@ -13,11 +13,12 @@
   </style>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
   <script src="/js/ethers.min.js"></script>
+  <script src="/js/config.js"></script>
   <script>
   const SCORER_ID = 1222;
   // endpoint for getting the signing message
   const SIGNING_MESSAGE_URI = 'https://api.scorer.gitcoin.co/registry/signing-message'
-
+  window.getElementById("scoreNeeded").innerText = window.GC_PASSPORT_THRESHOLD;
   async function bytesToHex(bytes) {
     return Array.from(
       bytes,
@@ -106,9 +107,9 @@
       <input type="text" name="token" hidden="true" id="token" value="">
       <input type="text" name="address" hidden="true" id="address" value="">
     </form>
-    <p id='metamaskSignatureRequired' hidden="true">A metamask signature is required to proceed, a simple signature request will not cost anything (double check on metamask though).</a>
-    <p id='notEnoughScore' hidden="true">We're sorry, but you need a passport score of at least 15 to signup. Verify something more and retry.</a>
-    <p id='accountAlreadyMade' hidden="true">This passport address was already used to make an account.</a>
+    <p id='metamaskSignatureRequired' hidden="true">A metamask signature is required to proceed, a simple signature request will not cost anything (double check on metamask though).</p>
+    <p id='notEnoughScore' hidden="true">We're sorry, but you need a passport score of at least <p id="scoreNeeded">-1</p> to signup. Verify something more and retry.</p>
+    <p id='accountAlreadyMade' hidden="true">This passport address was already used to make an account.</p>
     <p id='userWallet' class='text-lg text-gray-600 my-2'></p>
   </div>
 

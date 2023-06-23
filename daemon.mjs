@@ -102,7 +102,7 @@ function createAccAndFeed(username, pubKey, give_bw, give_vt, give_dtc) {
 app.get('/completeSignup/:uuid', (req, res) => {
   logger.debug(req.params);
   mongoose.connect(config.MONGODB_ADDRESS_DB+'?readPreference=primary&appname=dtube-signup&directConnection=true&ssl=false', { useNewUrlParser: true, useUnifiedTopology: true}).then((db) => {
-    requestSchema.findOne({emailCode: req.params.uuid, score: {$gte: 15}}).then((result) => {
+    requestSchema.findOne({emailCode: req.params.uuid, score: {$gte: config.GC_PASSPORT_THRESHOLD}}).then((result) => {
       if(result !== null && result.accountMade !== true) {
         res.send(confirmAccountPage.replace("{{USERNAME}}", result.username).replace("{{PUBLIC_KEY}}", result.pubKey).replace("{{UUID}}", result.emailCode));
       } else {
@@ -119,7 +119,7 @@ app.get('/completeSignup/:uuid', (req, res) => {
 
 app.get('/congratulations/:uuid', (req, res) => {
   mongoose.connect(config.MONGODB_ADDRESS_DB+'?readPreference=primary&appname=dtube-signup&directConnection=true&ssl=false', { useNewUrlParser: true, useUnifiedTopology: true}).then((db) => {
-    requestSchema.findOne({emailCode: req.params.uuid, accountMade: false, score: {$gte: 15}}).then((result) => {
+    requestSchema.findOne({emailCode: req.params.uuid, accountMade: false, score: {$gte: config.GC_PASSPORT_THRESHOLD}}).then((result) => {
       if(result !== null && result.username !== null && result.pubKey !== null) {
         createAccAndFeed(result.username, result.pubKey, 10000, 200)
         result.accountMade = true;
@@ -228,7 +228,7 @@ app.post('/getPassport/:address', (req, res) => {
   let { address } = req.params;
   axios.get(GET_PASSPORT_SCORE_URI+SCORER_ID+"/"+address, {headers: {"X-API-KEY": config.GC_API_KEY}, timeout: 20000}).then((result) => {
     let returnValue = result.data;
-    if (result.data.score >= 15) {
+    if (result.data.score >= config.GC_PASSPORT_THRESHOLD) {
       mongoose.connect(config.MONGODB_ADDRESS_DB+'?readPreference=primary&appname=dtube-signup&directConnection=true&ssl=false', { useNewUrlParser: true, useUnifiedTopology: true}).then(async(db) => {
         await requestSchema.findOne({address: address}).then((request) => {
           let token;
@@ -273,7 +273,7 @@ app.post('/submitPassport/:address/:signature/:nonce', (req, res) => {
         },
         { headers: {"X-API-KEY": config.GC_API_KEY}}
         ).then((response) => {
-          if (response.data.score >= 15) {
+          if (response.data.score >= config.GC_PASSPORT_THRESHOLD) {
             mongoose.connect(config.MONGODB_ADDRESS_DB+'?readPreference=primary&appname=dtube-signup&directConnection=true&ssl=false', { useNewUrlParser: true, useUnifiedTopology: true}).then(async(db) => {
               await requestSchema.findOne({address: req.params.address}).then((request) => {
                 let addressFromSignature = ethers.verifyMessage(message, req.params.signature);
