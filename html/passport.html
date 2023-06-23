@@ -18,7 +18,6 @@
   const SCORER_ID = 1222;
   // endpoint for getting the signing message
   const SIGNING_MESSAGE_URI = 'https://api.scorer.gitcoin.co/registry/signing-message'
-  window.getElementById("scoreNeeded").innerText = window.GC_PASSPORT_THRESHOLD;
   async function bytesToHex(bytes) {
     return Array.from(
       bytes,
@@ -46,15 +45,17 @@
         if (typeof passportData.address !== 'undefined' && typeof passportData.token !== 'undefined') {
           inputAddress.setAttribute("value", passportData.address)
           inputToken.setAttribute("value", passportData.token)
-          signupForm.removeAttribute("hidden");
-          accountAlreadyMade.setAttribute("hidden", true);
+          signupForm.removeAttribute("hidden")
+          accountAlreadyMade.setAttribute("hidden", true)
           notEnoughScore.setAttribute("hidden", true)
+          scoreNeeded.setAttribute("hidden", true)
         } else if (passportData.accountMade) {
           signupForm.setAttribute("hidden", true)
           accountAlreadyMade.removeAttribute("hidden")          
         } else {
           signupForm.setAttribute("hidden", true)
           notEnoughScore.removeAttribute("hidden")
+          scoreNeeded.removeAttribute("hidden")
         }
       } else {
         console.log('No score available, please add stamps to your passport and then resubmit.')
@@ -108,7 +109,7 @@
       <input type="text" name="address" hidden="true" id="address" value="">
     </form>
     <p id='metamaskSignatureRequired' hidden="true">A metamask signature is required to proceed, a simple signature request will not cost anything (double check on metamask though).</p>
-    <p id='notEnoughScore' hidden="true">We're sorry, but you need a passport score of at least <p id="scoreNeeded">-1</p> to signup. Verify something more and retry.</p>
+    <p id='notEnoughScore' hidden="true">We're sorry, but you need a passport score of at least <b id="scoreNeeded" hidden="true">-1</b> to signup. Verify something more and retry.</p>
     <p id='accountAlreadyMade' hidden="true">This passport address was already used to make an account.</p>
     <p id='userWallet' class='text-lg text-gray-600 my-2'></p>
   </div>
@@ -123,6 +124,7 @@
     const userWallet = document.getElementById('userWallet')
     const signupForm = document.getElementById('signupForm')
     const notEnoughScore = document.getElementById('notEnoughScore')
+    const scoreNeeded = document.getElementById('scoreNeeded')
     const accountAlreadyMade = document.getElementById('accountAlreadyMade')
     const metamaskLink = document.getElementById('metamaskLink')
 
@@ -140,6 +142,7 @@
     
     async function loginWithMetaMask() {
       try {
+        document.getElementById("scoreNeeded").innerText = window.config.GC_PASSPORT_THRESHOLD;
         await window.ethereum.request({ method: 'eth_requestAccounts' }).then((accounts => {
         if (!accounts) { return }
           window.userWalletAddress = accounts[0];
