@@ -1,6 +1,6 @@
 import express from 'express';;
 import log4js from 'log4js';
-import * as javalon from 'javalon';
+import avalon from 'javalon';
 import * as fs from 'fs';
 import axios from 'axios';
 import mongoose from 'mongoose';
@@ -53,8 +53,8 @@ function createAccAndFeed(username, pubKey, give_bw, give_vt, give_dtc) {
       type: 0,
       data: txData
   }
-  newTx = javalon.sign(config.avalon.priv, config.avalon.account, newTx)
-  javalon.sendTransaction(newTx, function(err, res) {
+  newTx = avalon.sign(config.avalon.priv, config.avalon.account, newTx)
+  avalon.sendTransaction(newTx, function(err, res) {
       if (err) return
       logger.info('Feeding '+username)
       setTimeout(function() {
@@ -66,8 +66,8 @@ function createAccAndFeed(username, pubKey, give_bw, give_vt, give_dtc) {
                       receiver: username
                   }
               }
-              newTx = javalon.sign(config.avalon.priv, config.avalon.account, newTx)
-              javalon.sendTransaction(newTx, function(err, res) {})
+              newTx = avalon.sign(config.avalon.priv, config.avalon.account, newTx)
+              avalon.sendTransaction(newTx, function(err, res) {})
           }
 
           if (give_bw) {
@@ -78,8 +78,8 @@ function createAccAndFeed(username, pubKey, give_bw, give_vt, give_dtc) {
                       receiver: username
                   }
               }
-              newTx = javalon.sign(config.avalon.priv, config.avalon.account, newTx)
-              javalon.sendTransaction(newTx, function(err, res) {})
+              newTx = avalon.sign(config.avalon.priv, config.avalon.account, newTx)
+              avalon.sendTransaction(newTx, function(err, res) {})
           }
           
           if (give_dtc) {
@@ -91,8 +91,8 @@ function createAccAndFeed(username, pubKey, give_bw, give_vt, give_dtc) {
                       memo: 'Thank you for signing up!'
                   }
               }
-              newTx = javalon.sign(config.avalon.priv, config.avalon.account_dtc, newTx)
-              javalon.sendTransaction(newTx, function(err, res) {})
+              newTx = avalon.sign(config.avalon.priv, config.avalon.account_dtc, newTx)
+              avalon.sendTransaction(newTx, function(err, res) {})
           }
       }, 6000)
   })
