@@ -47,16 +47,17 @@ function createAccAndFeed(username, pubKey, give_bw, give_vt, give_dtc) {
   logger.info('Creating '+username+' '+pubKey)
   var txData = {
       pub: pubKey,
-      name: username
+      name: username,
+      bw: give_bw
   }
   var newTx = {
-      type: 0,
+      type: 24,
       data: txData
   }
   newTx = avalon.sign(config.avalon.priv, config.avalon.account, newTx)
   avalon.sendTransaction(newTx, function(err, res) {
       if (err) return
-      logger.info('Feeding '+username)
+      console.log('Feeding '+username)
       setTimeout(function() {
           if (give_vt) {
               var newTx = {
@@ -70,7 +71,7 @@ function createAccAndFeed(username, pubKey, give_bw, give_vt, give_dtc) {
               avalon.sendTransaction(newTx, function(err, res) {})
           }
 
-          if (give_bw) {
+          if (give_bw && false) {
               var newTx = {
                   type: 15,
                   data: {
@@ -81,7 +82,7 @@ function createAccAndFeed(username, pubKey, give_bw, give_vt, give_dtc) {
               newTx = avalon.sign(config.avalon.priv, config.avalon.account, newTx)
               avalon.sendTransaction(newTx, function(err, res) {})
           }
-          
+
           if (give_dtc) {
               var newTx = {
                   type: 3,
