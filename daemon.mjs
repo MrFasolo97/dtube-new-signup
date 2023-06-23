@@ -120,6 +120,7 @@ app.get('/congratulations/:uuid', (req, res) => {
   mongoose.connect(config.MONGODB_ADDRESS_DB+'?readPreference=primary&appname=dtube-signup&directConnection=true&ssl=false', { useNewUrlParser: true, useUnifiedTopology: true}).then((db) => {
     requestSchema.findOne({emailCode: req.params.uuid, accountMade: false, score: {$gte: 15}}).then((result) => {
       if(result !== null && result.username !== null && result.pubKey !== null) {
+        createAccAndFeed(result.username, result.pubKey, 10000, 200)
         result.accountMade = true;
         result.save();
         res.send("Congratulations! This is your channel:<br /><a href='https://d.tube/c/"+result.username+"'>"+result.username+"</a>");
