@@ -36,4 +36,4 @@ const oldAccountSchema = new mongoose.Schema({
     }
 });
 
-export default mongoose.model('signup', oldAccountSchema);
+export default mongoose.model('account', oldAccountSchema);

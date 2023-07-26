@@ -9,7 +9,7 @@ import bodyParser from 'body-parser';
 import { ethers } from 'ethers';
 import validateUsername from './username_validation.mjs';
 import requestSchema from './mongo/request.mjs';
-import oldAccount from './mongo/oldAccount.mjs';
+import oldAccountSchema from './mongo/oldAccount.mjs';
 import emails from './emails.js';
 import config from './config.js';
 
@@ -144,9 +144,9 @@ app.post('/saveUserData/:address', (req, res) => {
     console.log(email);
     console.log(address);
     console.log(pubKey);
-    oldAccount.findOne({email: email}).then((oldAccount) => {
+    oldAccountSchema.findOne({email: email}).then((oldAccount) => {
       if(oldAccount !== null && oldAccount.pub !== null && oldAccount.username !== null && oldAccount.finalized == true) {
-        res.send("There is already an account made with this email address.");
+        res.status(500).send("There is already an account made with this email address.");
       } else
         requestSchema.findOne({address: address, accountMade: true}).then((account) => {
           if (account !== null) {
