@@ -237,6 +237,7 @@ app.get('/js/:file', (req, res) => {
   try {
     res.send(fs.readFileSync("html/js/"+file));
   } catch(e) {
+    logger.warn(e);
     logger.warn(`IP ${req.headers['x-forwarded-for']} asked for missing file: "${file}" (folder "js")`);
     res.status(404);
     res.type("text/plain");
@@ -253,6 +254,7 @@ app.get('/legal/:file', (req, res) => {
   try {
     res.send(fs.readFileSync("html/legal/"+file));
   } catch(e) {
+    logger.warn(e);
     logger.warn(`IP ${req.headers['x-forwarded-for']} asked for missing file: "${file}" (folder "legal")`);
     res.status(404);
     res.type("text/plain");
