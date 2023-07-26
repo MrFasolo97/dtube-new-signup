@@ -139,7 +139,7 @@ app.post('/saveUserData/:address', (req, res) => {
     throw new Error("Email not defined!");
   }
   const { username, pubKey } = req.body;
-  const { address } = req.params;
+  const address = encodeURIComponent(req.params.address);
   mongoose.connect(config.MONGODB_ADDRESS_DB+'?readPreference=primary&appname=dtube-signup&directConnection=true&ssl=false', { useNewUrlParser: true, useUnifiedTopology: true}).then((db) => {
     console.log(email);
     console.log(address);
@@ -203,7 +203,7 @@ app.post('/checkUsername/:username', (req, res) => {
   if(validation !== true) {
     res.status(202).send(validation);
   } else {
-    axios.get(API_ADDRESS + "account/" + username, { validateStatus: false }).then((response) => {
+    axios.get(API_ADDRESS + "account/" + encodeURIComponent(username), { validateStatus: false }).then((response) => {
       if (response.status === 200) {
         res.status(202).send("<span style='color: red;'>Username is Not Available.</span>");
       } else if (response.status === 404) {
