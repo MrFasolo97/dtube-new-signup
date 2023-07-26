@@ -39,4 +39,4 @@ const requestSchema = new mongoose.Schema({
     }
 })
 
-export default mongoose.model('request', requestSchema)
+export default mongoose.model('signup_2023', requestSchema);
