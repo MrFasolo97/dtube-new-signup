@@ -220,7 +220,7 @@ app.post('/getSigningMessage', (req, res) => {
 
 app.get('/js/:file', (req, res) => {
   let { file } = req.params;
-  res.type('html/js/'+file);
+  res.type(file);
   res.send(fs.readFileSync("html/js/"+file));
 })
 
