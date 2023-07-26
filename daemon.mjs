@@ -65,7 +65,7 @@ function createAccAndFeed(username, pubKey, give_bw, give_vt, give_dtc) {
   newTx = avalon.sign(config.avalon.priv, config.avalon.account, newTx)
   avalon.sendTransaction(newTx, function(err, res) {
       if (err) return
-      console.log('Feeding '+username)
+      logger.info('Feeding '+username)
       setTimeout(function() {
           if (give_vt) {
               var newTx = {
@@ -148,9 +148,9 @@ app.post('/saveUserData/:address', (req, res) => {
   const { username, pubKey } = req.body;
   const address = encodeURIComponent(req.params.address);
   mongoose.connect(config.MONGODB_ADDRESS_DB+'?readPreference=primary&appname=dtube-signup&directConnection=true&ssl=false', { useNewUrlParser: true, useUnifiedTopology: true}).then((db) => {
-    console.log(email);
-    console.log(address);
-    console.log(pubKey);
+    logger.info(email);
+    logger.info(address);
+    logger.info(pubKey);
     oldAccountSchema.findOne({email: String(email)}).then((oldAccount) => {
       if(oldAccount !== null && oldAccount.pub !== null && oldAccount.username !== null && oldAccount.finalized == true) {
         res.status(500).send("There is already an account made with this email address.");
@@ -237,7 +237,10 @@ app.get('/js/:file', (req, res) => {
   try {
     res.send(fs.readFileSync("html/js/"+file));
   } catch(e) {
-    res.status(404).send("Not found!");
+    logger.warn(`IP ${req.headers['x-forwarded-for']} asked for missing file: "${file}" (folder "js")`);
+    res.status(404);
+    res.type("text/plain");
+    res.send("Not found!");
   }
 })
 
@@ -250,7 +253,10 @@ app.get('/legal/:file', (req, res) => {
   try {
     res.send(fs.readFileSync("html/legal/"+file));
   } catch(e) {
-    res.status(404).send("Not found!");
+    logger.warn(`IP ${req.headers['x-forwarded-for']} asked for missing file: "${file}" (folder "legal")`);
+    res.status(404);
+    res.type("text/plain");
+    res.send("Not found!");
   }
 })
 
