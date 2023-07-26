@@ -199,7 +199,7 @@ app.post('/signup', (req, res) => {
 
 const API_ADDRESS = config.avalon.api;
 app.post('/checkUsername/:username', (req, res) => {
-  const { username } = req.params;
+  const username = encodeURIComponent(req.params.username);
   const validation = validateUsername(username, 50, 9, 'abcdefghijklmnopqrstuvwxyz0123456789', '-.')
   if(validation !== true) {
     res.status(202).send(validation);
@@ -317,7 +317,7 @@ app.post('/signupPage', (req, res) => {
             res.status(400).send("Invalid request!");
           } else {
             res.type("html");
-            res.send(indexPage.replace("{{USER_ETH_ADDRESS}}", address));
+            res.send(indexPage.replace("{{USER_ETH_ADDRESS}}", encodeURIComponent(address)));
           }
         }).catch((reason) => {
           if(reason) throw reason;
