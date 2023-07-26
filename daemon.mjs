@@ -324,12 +324,11 @@ app.post('/signupPage', (req, res) => {
       });
 })
 
-let port = 3002;
 app.get('/', (req, res) => {
   res.type("html");
   res.send(passportPage);
 });
 
-app.listen(port, () => {
-  logger.info(`Listening on port ${port}`);
+app.listen(config.port, () => {
+  logger.info(`Listening on port ${config.port}`);
 });

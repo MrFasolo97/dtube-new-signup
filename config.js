@@ -9,6 +9,7 @@ var config = {
     domain: process.env.DOMAIN || "localhost:3000",
     hcaptchaSecret: process.env.HCAPTCHA_SECRET || "aaa",
     enableCaptcha: true,
+    port: process.env.PORT || 3002,
     aws: {
         id: process.env.AWS_ID || "123",
         secret: process.env.AWS_SECRET || "bbb"
