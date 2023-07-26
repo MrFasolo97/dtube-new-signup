@@ -30,6 +30,18 @@ const oldAccountSchema = new mongoose.Schema({
         required: false,
         type: Boolean,
     },
+    birth: {
+        required: false,
+        type: String,
+    },
+    ref: {
+        required: false,
+        type: Boolean,
+    },
+    startTime: {
+        required: false,
+        type: Number,
+    },
     username: {
         type: String,
         required: false,
