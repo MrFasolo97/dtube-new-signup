@@ -9,6 +9,7 @@ import bodyParser from 'body-parser';
 import { ethers } from 'ethers';
 import validateUsername from './username_validation.mjs';
 import requestSchema from './mongo/request.mjs';
+import oldAccount from './mongo/oldAccount.mjs';
 import emails from './emails.js';
 import config from './config.js';
 
@@ -143,41 +144,46 @@ app.post('/saveUserData/:address', (req, res) => {
     console.log(email);
     console.log(address);
     console.log(pubKey);
-      requestSchema.findOne({address: address, accountMade: true}).then((account) => {
-        if (account !== null) {
-          res.send("There is already an account made with this email address.");
-        } else {
-          requestSchema.findOne({address: address}).then((request) => {
-            if (request === null) {
-              res.status(400).send("Invalid request!");
-            } else if (request.accountMade !== true) {
-              const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress; 
-              const email2 = emails.removeEmailTricks(email) || email;
-              emails.send(emails.removeEmailTricks(email2), email2, "DTube Signup", request.emailCode, ipAddress, (err, res) => {
-                if (err) {
-                  res.status(500).send("Something went wrong while sending the email...");
-                  throw err;
-                }
-                request.email = email2;
-                request.username = username;
-                request.pubKey = pubKey;
-                request.save();
-                res.send("OK, check your email!");
-              });
-            } else if (request.accountMade === true) {
-              res.send("You already have an account!");
-            } else {
-              res.status(500).send("Something went wrong! Please, retry.");
-            }
-        });
-      }
-    }).catch((reason) => {
-      if(reason) throw reason;
-      res.status(500).send("Something went wrong! Please, retry.");  
-  }).catch((reason) => {
-    if(reason) throw reason;
-    res.status(500).send("Something went wrong! Please, retry.");
-  });
+    oldAccount.findOne({email: email}).then((oldAccount) => {
+      if(oldAccount !== null && oldAccount.pub !== null && oldAccount.username !== null && oldAccount.finalized == true) {
+        res.send("There is already an account made with this email address.");
+      } else
+        requestSchema.findOne({address: address, accountMade: true}).then((account) => {
+          if (account !== null) {
+            res.send("There is already an account made with this ethereum address.");
+          } else {
+            requestSchema.findOne({address: address}).then((request) => {
+              if (request === null) {
+                res.status(400).send("Invalid request!");
+              } else if (request.accountMade !== true) {
+                const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress; 
+                const email2 = emails.removeEmailTricks(email) || email;
+                emails.send(emails.removeEmailTricks(email2), email2, "DTube Signup", request.emailCode, ipAddress, (err, res) => {
+                  if (err) {
+                    res.status(500).send("Something went wrong while sending the email...");
+                    throw err;
+                  }
+                  request.email = email2;
+                  request.username = username;
+                  request.pubKey = pubKey;
+                  request.save();
+                  res.send("OK, check your email!");
+                });
+              } else if (request.accountMade === true) {
+                res.send("You already have an account!");
+              } else {
+                res.status(500).send("Something went wrong! Please, retry.");
+              }
+          }).catch((reason) => {
+            if(reason) throw reason;
+            res.status(500).send("Something went wrong! Please, retry.");
+          });
+        }
+      }).catch((reason) => {
+        if(reason) throw reason;
+          res.status(500).send("Something went wrong! Please, retry.");  
+      })
+    });
   });
 });
 
