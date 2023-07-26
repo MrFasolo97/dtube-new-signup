@@ -234,7 +234,11 @@ app.use('/js', limiter);
 app.get('/js/:file', (req, res) => {
   let file = sanitize(req.params.file);
   res.type(file);
-  res.send(fs.readFileSync("html/js/"+file));
+  try {
+    res.send(fs.readFileSync("html/js/"+file));
+  } catch(e) {
+    res.status(404).send("Not found!");
+  }
 })
 
 
@@ -243,45 +247,53 @@ app.get('/legal/:file', (req, res) => {
   let file = sanitize(req.params.file);
   res.charset = 'utf-8';
   res.type("html");
-  res.send(fs.readFileSync("html/legal/"+file));
+  try {
+    res.send(fs.readFileSync("html/legal/"+file));
+  } catch(e) {
+    res.status(404).send("Not found!");
+  }
 })
 
 
 app.post('/getPassport/:address', (req, res) => {
   let address = encodeURIComponent(req.params.address);
-  axios.get(GET_PASSPORT_SCORE_URI+SCORER_ID+"/"+address, {headers: {"X-API-KEY": config.GC_API_KEY}, timeout: 20000}).then((result) => {
-    let returnValue = result.data;
-    if (+result.data.score >= config.GC_PASSPORT_THRESHOLD) {
-      mongoose.connect(config.MONGODB_ADDRESS_DB+'?readPreference=primary&appname=dtube-signup&directConnection=true&ssl=false', { useNewUrlParser: true, useUnifiedTopology: true}).then(async(db) => {
-        await requestSchema.findOne({address: address}).then((request) => {
-          let token;
-          if (request === null) {
-            const _id = randomUUID();
-            const emailCode = randomUUID();
-            requestSchema.create({_id: _id, address: address, score: result.data.score, email: "", emailCode: emailCode, pubKey: "", username: "", accountMade: false});
-            token = _id;
-            returnValue.accountMade = false;
-          } else if (request.accountMade === false || typeof request.accountMade === 'undefined') {
-            address = request.address;
-            token = request._id;
-            returnValue.accountMade = false;
-          } else {
-            returnValue.accountMade = request.accountMade;
-          }
-          returnValue.address = address;
-          returnValue.token = token;         
-          res.send(returnValue);
-        }).catch((reason) => {
-          if (reason) throw reason;
-        })
-      });
-    } else {
-      res.send(returnValue);
-    }
-  }).catch((reason) => {
-    logger.warn(reason)
-    res.status(400).send("Error!");
-  });
+  if (address !== null) {
+    axios.get(GET_PASSPORT_SCORE_URI+SCORER_ID+"/"+address, {headers: {"X-API-KEY": config.GC_API_KEY}, timeout: 20000}).then((result) => {
+      let returnValue = result.data;
+      if (+result.data.score >= config.GC_PASSPORT_THRESHOLD) {
+        mongoose.connect(config.MONGODB_ADDRESS_DB+'?readPreference=primary&appname=dtube-signup&directConnection=true&ssl=false', { useNewUrlParser: true, useUnifiedTopology: true}).then(async(db) => {
+          await requestSchema.findOne({address: address}).then((request) => {
+            let token;
+            if (request === null) {
+              const _id = randomUUID();
+              const emailCode = randomUUID();
+              requestSchema.create({_id: _id, address: address, score: result.data.score, email: "", emailCode: emailCode, pubKey: "", username: "", accountMade: false});
+              token = _id;
+              returnValue.accountMade = false;
+            } else if (request.accountMade === false || typeof request.accountMade === 'undefined') {
+              address = request.address;
+              token = request._id;
+              returnValue.accountMade = false;
+            } else {
+              returnValue.accountMade = request.accountMade;
+            }
+            returnValue.address = address;
+            returnValue.token = token;         
+            res.send(returnValue);
+          }).catch((reason) => {
+            if (reason) throw reason;
+          })
+        });
+      } else {
+        res.send(returnValue);
+      }
+    }).catch((reason) => {
+      logger.warn(reason)
+      res.status(400).send("Error!");
+    });
+  } else {
+    res.status(400).send("Address missing!");
+  }
 });
 
 app.use(express.json())
