@@ -224,6 +224,14 @@ app.get('/js/:file', (req, res) => {
   res.send(fs.readFileSync("html/js/"+file));
 })
 
+app.get('/legal/:file', (req, res) => {
+  let { file } = req.params;
+  res.charset = 'utf-8';
+  res.type("html");
+  res.send(fs.readFileSync("html/legal/"+file));
+})
+
+
 app.post('/getPassport/:address', (req, res) => {
   let { address } = req.params;
   axios.get(GET_PASSPORT_SCORE_URI+SCORER_ID+"/"+address, {headers: {"X-API-KEY": config.GC_API_KEY}, timeout: 20000}).then((result) => {
