@@ -190,7 +190,7 @@ app.post('/signup', (req, res) => {
   res.send("")
 });
 
-const API_ADDRESS = "https://avalon.d.tube/"
+const API_ADDRESS = config.avalon.api;
 app.post('/checkUsername/:username', (req, res) => {
   const { username } = req.params;
   const validation = validateUsername(username, 50, 9, 'abcdefghijklmnopqrstuvwxyz0123456789', '-.')
