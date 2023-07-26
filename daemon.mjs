@@ -1,4 +1,5 @@
 import express from 'express';;
+import RateLimit from 'express-rate-limit';
 import log4js from 'log4js';
 import avalon from 'javalon';
 import * as fs from 'fs';
@@ -34,7 +35,7 @@ const SCORER_ID = "1222";
 const logger = log4js.getLogger();
 const app = express();
 logger.level = config.logLevel || "DEBUG";
-app.set('trust proxy', true);
+// app.set('trust proxy', true);
 const indexPage = fs.readFileSync("html/index.html", { encoding: "utf-8" })
 const passportPage = fs.readFileSync("html/passport.html")
 const confirmAccountPage = fs.readFileSync("html/confirmAccount.html", { encoding: "utf-8" })
@@ -43,23 +44,12 @@ const GET_PASSPORT_SCORE_URI = `https://api.scorer.gitcoin.co/registry/score/`
 const SUBMIT_PASSPORT_URI = 'https://api.scorer.gitcoin.co/registry/submit-passport'
 // endpoint for getting the signing message
 const SIGNING_MESSAGE_URI = 'https://api.scorer.gitcoin.co/registry/signing-message'
-const rateLimits = {};
 avalon.init({api: config.avalon.api});
 
-function rateLimitIPAddress(ip) {
-  if(rateLimits[ip] == null) {
-    rateLimits[ip] = {};
-    rateLimits[ip].startTime = Date.now();
-    rateLimits[ip].counter = 1;
-  } else if (rateLimits[ip].startTime - Date.now() > 20000) {
-    rateLimits[ip].startTime = Date.now();
-    rateLimits[ip].counter = 1;
-  } else {
-    rateLimits[ip].counter += 1;
-  }
-
-  return rateLimits[ip].counter >= 10;
-}
+const limiter = RateLimit({
+  windowMs: 1*60*1000, // 1 minute
+  max: 10
+});
 
 function createAccAndFeed(username, pubKey, give_bw, give_vt, give_dtc) {
   logger.info('Creating '+username+' '+pubKey)
@@ -240,26 +230,20 @@ app.post('/getSigningMessage', (req, res) => {
   });
 });
 
-
+app.use('/js', limiter);
 app.get('/js/:file', (req, res) => {
-  if (rateLimitIPAddress(req.ip)) {
-    res.status(429).send("Too many requests, try again in a few minutes");
-  } else {
-    let file = sanitize(req.params.file);
-    res.type(file);
-    res.send(fs.readFileSync("html/js/"+file));
-  }
+  let file = sanitize(req.params.file);
+  res.type(file);
+  res.send(fs.readFileSync("html/js/"+file));
 })
 
+
+app.use('/legal', limiter);
 app.get('/legal/:file', (req, res) => {
-  if (rateLimitIPAddress(req.ip)) {
-    res.status(429).send("Too many requests, try again in a few minutes");
-  } else {
-    let file = sanitize(req.params.file);
-    res.charset = 'utf-8';
-    res.type("html");
-    res.send(fs.readFileSync("html/legal/"+file));
-  }
+  let file = sanitize(req.params.file);
+  res.charset = 'utf-8';
+  res.type("html");
+  res.send(fs.readFileSync("html/legal/"+file));
 })
 
 

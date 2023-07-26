@@ -33,7 +33,7 @@ var emails = {
             cb('Maximum rate limit exceeded. Please wait a few minutes and try again.')
             return
         }
-        var link = config.protocol+config.domain+'/completeSignup/'+uuid
+        var link = config.protocol+config.domain+'/completeSignup/'+encodeURIComponent(uuid)
         var text = "To continue the account creation process, please click on the following link:\n"
         var htmlText = text.replace('\n','<br/>')
         text += link+' \r\n Please, don\'t reply, this email account isn\'t monitored.'
