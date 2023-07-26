@@ -43,7 +43,23 @@ const GET_PASSPORT_SCORE_URI = `https://api.scorer.gitcoin.co/registry/score/`
 const SUBMIT_PASSPORT_URI = 'https://api.scorer.gitcoin.co/registry/submit-passport'
 // endpoint for getting the signing message
 const SIGNING_MESSAGE_URI = 'https://api.scorer.gitcoin.co/registry/signing-message'
+const rateLimits = {};
 avalon.init({api: config.avalon.api});
+
+function rateLimitIPAddress(ip) {
+  if(rateLimits[ip] == null) {
+    rateLimits[ip] = {};
+    rateLimits[ip].startTime = Date.now();
+    rateLimits[ip].counter = 1;
+  } else if (rateLimits[ip].startTime - Date.now() > 20000) {
+    rateLimits[ip].startTime = Date.now();
+    rateLimits[ip].counter = 1;
+  } else {
+    rateLimits[ip].counter += 1;
+  }
+
+  return rateLimits[ip].counter >= 10;
+}
 
 function createAccAndFeed(username, pubKey, give_bw, give_vt, give_dtc) {
   logger.info('Creating '+username+' '+pubKey)
@@ -226,16 +242,24 @@ app.post('/getSigningMessage', (req, res) => {
 
 
 app.get('/js/:file', (req, res) => {
-  let file = sanitize(req.params.file);
-  res.type(file);
-  res.send(fs.readFileSync("html/js/"+file));
+  if (rateLimitIPAddress(req.ip)) {
+    res.status(429).send("Too many requests, try again in a few minutes");
+  } else {
+    let file = sanitize(req.params.file);
+    res.type(file);
+    res.send(fs.readFileSync("html/js/"+file));
+  }
 })
 
 app.get('/legal/:file', (req, res) => {
-  let file = sanitize(req.params.file);
-  res.charset = 'utf-8';
-  res.type("html");
-  res.send(fs.readFileSync("html/legal/"+file));
+  if (rateLimitIPAddress(req.ip)) {
+    res.status(429).send("Too many requests, try again in a few minutes");
+  } else {
+    let file = sanitize(req.params.file);
+    res.charset = 'utf-8';
+    res.type("html");
+    res.send(fs.readFileSync("html/legal/"+file));
+  }
 })
 
 
