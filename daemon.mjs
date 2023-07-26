@@ -7,6 +7,7 @@ import mongoose from 'mongoose';
 import { randomUUID } from 'crypto';
 import bodyParser from 'body-parser';
 import { ethers } from 'ethers';
+import sanitize from 'sanitize-filename';
 import validateUsername from './username_validation.mjs';
 import requestSchema from './mongo/request.mjs';
 import oldAccountSchema from './mongo/oldAccount.mjs';
@@ -144,7 +145,7 @@ app.post('/saveUserData/:address', (req, res) => {
     console.log(email);
     console.log(address);
     console.log(pubKey);
-    oldAccountSchema.findOne({email: email}).then((oldAccount) => {
+    oldAccountSchema.findOne({email: String(email)}).then((oldAccount) => {
       if(oldAccount !== null && oldAccount.pub !== null && oldAccount.username !== null && oldAccount.finalized == true) {
         res.status(500).send("There is already an account made with this email address.");
       } else
@@ -225,13 +226,13 @@ app.post('/getSigningMessage', (req, res) => {
 
 
 app.get('/js/:file', (req, res) => {
-  let { file } = req.params;
+  let file = sanitize(req.params.file);
   res.type(file);
   res.send(fs.readFileSync("html/js/"+file));
 })
 
 app.get('/legal/:file', (req, res) => {
-  let { file } = req.params;
+  let file = sanitize(req.params.file);
   res.charset = 'utf-8';
   res.type("html");
   res.send(fs.readFileSync("html/legal/"+file));
@@ -239,7 +240,7 @@ app.get('/legal/:file', (req, res) => {
 
 
 app.post('/getPassport/:address', (req, res) => {
-  let { address } = req.params;
+  let address = encodeURIComponent(req.params.address);
   axios.get(GET_PASSPORT_SCORE_URI+SCORER_ID+"/"+address, {headers: {"X-API-KEY": config.GC_API_KEY}, timeout: 20000}).then((result) => {
     let returnValue = result.data;
     if (+result.data.score >= config.GC_PASSPORT_THRESHOLD) {
@@ -311,7 +312,7 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.post('/signupPage', (req, res) => {
   let { address, token } = req.body;
   mongoose.connect(config.MONGODB_ADDRESS_DB+'?readPreference=primary&appname=dtube-signup&directConnection=true&ssl=false', { useNewUrlParser: true, useUnifiedTopology: true}).then(async(db) => {
-        await requestSchema.findOne({address: address, _id: token}).then((request) => {
+        await requestSchema.findOne({address: String(address), _id: String(token)}).then((request) => {
           if(request === null) {
             res.status(400).send("Invalid request!");
           } else {
