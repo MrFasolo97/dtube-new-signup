@@ -206,14 +206,13 @@ app.post('/signup', (req, res) => {
   res.send("")
 });
 
-const API_ADDRESS = config.avalon.api;
 app.post('/checkUsername/:username', (req, res) => {
   const username = encodeURIComponent(req.params.username);
   const validation = validateUsername(username, 50, 9, 'abcdefghijklmnopqrstuvwxyz0123456789', '-.')
   if(validation !== true) {
     res.status(202).send(validation);
   } else {
-    axios.get(API_ADDRESS + "account/" + encodeURIComponent(username), { validateStatus: false }).then((response) => {
+    axios.get(config.avalon.api + "/account/" + encodeURIComponent(username), { validateStatus: false }).then((response) => {
       if (response.status === 200) {
         res.status(202).send("<span style='color: red;'>Username is Not Available.</span>");
       } else if (response.status === 404) {
