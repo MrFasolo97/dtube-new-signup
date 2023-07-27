@@ -64,7 +64,10 @@ function createAccAndFeed(username, pubKey, give_bw, give_vt, give_dtc) {
   }
   newTx = avalon.sign(config.avalon.priv, config.avalon.account, newTx)
   avalon.sendTransaction(newTx, function(err, res) {
-      if (err) return
+      if (err) {
+        logger.error(err);
+        return
+      }
       logger.info('Feeding '+username)
       setTimeout(function() {
           if (give_vt) {
