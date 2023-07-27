@@ -9,6 +9,8 @@ function validateUsername(value, maxLength, minLength, allowedChars, allowedChar
         return "<span style='color: red;'>Username too long!</span>"
     if (value.length < minLength)
         return "<span style='color: red;'>Username too short!</span>"
+    if (value.replace(/[^0-9]/g,"").length < 2)
+        return "<span style='color: red;'>Username should have at least 2 digits!</span>"
     if (allowedChars)
         for (let i = 0; i < value.length; i++)
             if (allowedChars.indexOf(value[i]) === -1)
