@@ -5,6 +5,8 @@ function validateUsername(value, maxLength, minLength, allowedChars, allowedChar
         minLength = 0
     if (typeof value !== 'string')
         return "<span style='color: red;'>The username should be a string!</span>"
+    if (value.toLowerCase() !== value)
+        return "<span style='color: red;'>The username should be all lowercase!</span>"
     if (value.length > maxLength)
         return "<span style='color: red;'>Username too long!</span>"
     if (value.length < minLength)

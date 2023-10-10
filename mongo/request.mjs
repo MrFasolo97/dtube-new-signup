@@ -37,6 +37,9 @@ const requestSchema = new mongoose.Schema({
         required: true,
         type: Number
     }
+},
+{
+  timestamps: true
 })
 
 export default mongoose.model('signup_2023', requestSchema);

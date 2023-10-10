@@ -1,3 +1,3 @@
 window.config = {
-    GC_PASSPORT_THRESHOLD: 8,
+    GC_PASSPORT_THRESHOLD: 5,
 }

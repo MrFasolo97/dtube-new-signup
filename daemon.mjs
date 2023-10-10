@@ -62,11 +62,15 @@ function createAccAndFeed(username, pubKey, give_bw, give_vt, give_dtc) {
       type: 24,
       data: txData
   }
+  if (validateUsername(username, 50, 9, 'abcdefghijklmnopqrstuvwxyz0123456789', '-.') !== true) {
+      logger.warn("Invalid account request catched!");
+      return
+  }
   newTx = avalon.sign(config.avalon.priv, config.avalon.account, newTx)
   avalon.sendTransaction(newTx, function(err, res) {
       if (err) {
         logger.error(err);
-        return
+        return;
       }
       logger.info('Feeding '+username)
       setTimeout(function() {
@@ -114,7 +118,7 @@ app.get('/completeSignup/:uuid', (req, res) => {
   logger.debug(req.params);
   mongoose.connect(config.MONGODB_ADDRESS_DB+'?readPreference=primary&appname=dtube-signup&directConnection=true&ssl=false', { useNewUrlParser: true, useUnifiedTopology: true}).then((db) => {
     requestSchema.findOne({emailCode: req.params.uuid, score: {$gte: config.GC_PASSPORT_THRESHOLD}}).then((result) => {
-      if(result !== null && result.accountMade !== true) {
+      if(result !== null && result.accountMade !== true && validateUsername(result.username, 50, 9, 'abcdefghijklmnopqrstuvwxyz0123456789', '-.') == true) {
         res.send(confirmAccountPage.replace("{{USERNAME}}", result.username).replace("{{PUBLIC_KEY}}", result.pubKey).replace("{{UUID}}", result.emailCode));
       } else {
         logger.debug(result);
@@ -131,7 +135,7 @@ app.get('/completeSignup/:uuid', (req, res) => {
 app.get('/congratulations/:uuid', (req, res) => {
   mongoose.connect(config.MONGODB_ADDRESS_DB+'?readPreference=primary&appname=dtube-signup&directConnection=true&ssl=false', { useNewUrlParser: true, useUnifiedTopology: true}).then((db) => {
     requestSchema.findOne({emailCode: req.params.uuid, accountMade: false, score: {$gte: config.GC_PASSPORT_THRESHOLD}}).then((result) => {
-      if(result !== null && result.username !== null && result.pubKey !== null) {
+      if(result !== null && result.username !== null && result.pubKey !== null && validateUsername(result.username, 50, 9, 'abcdefghijklmnopqrstuvwxyz0123456789', '-.') == true) {
         createAccAndFeed(result.username, result.pubKey, 10000, 200)
         result.accountMade = true;
         result.save();
@@ -239,7 +243,7 @@ app.get('/js/:file', (req, res) => {
   try {
     res.send(fs.readFileSync("html/js/"+file));
   } catch(e) {
-    logger.warn(e);
+    //logger.warn(e);
     logger.warn(`IP ${req.headers['x-forwarded-for']} asked for missing file: "${file}" (folder "js")`);
     res.status(404);
     res.type("text/plain");
