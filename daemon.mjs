@@ -1,7 +1,7 @@
 import express from 'express';;
 import RateLimit from 'express-rate-limit';
 import log4js from 'log4js';
-import avalon from 'javalon';
+import avalon from 'javalon2';
 import * as fs from 'fs';
 import axios from 'axios';
 import mongoose from 'mongoose';
