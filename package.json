@@ -26,7 +26,7 @@
     "follow-redirects": "^1.15.6",
     "javalon2": "^1.0.6",
     "log4js": "^6.9.1",
-    "mongoose": "^8.0.3",
+    "mongoose": "^8.9.5",
     "nodemailer": "^6.9.13",
     "sanitize-filename": "^1.6.3",
     "secp256k1": "^5.0.1"
